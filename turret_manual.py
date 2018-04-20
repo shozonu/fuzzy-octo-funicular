@@ -5,12 +5,11 @@ from picamera.array import PiRGBArray
 import pygame
 from pygame.locals import *
 import cv2
-from multiprocessing import Process
+import numpy
+from multiprocessing import Process, Pipe
 
 #initialize pygame and variables
 pygame.init()
-global stopVideo
-stopVideo = False
 
 #initialize servos
 vAngle = 0.0
@@ -19,9 +18,9 @@ pantilthat.servo_one(hAngle)
 pantilthat.servo_two(vAngle)
 speed = 0.25
 
-print("Finished initialization")
+print("Finished Main Initialization")
 
-def video():
+def video(conn):
     #initialize camera
     camera = PiCamera()
     camera.resolution = (640, 480)
@@ -33,35 +32,37 @@ def video():
     
     # grab the raw NumPy array representing the image, then initialize the timestamp
     # and occupied/unoccupied text
-    print("Starting Capture")
-    for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+    print("Continuous Video Capture Started")
+    for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
         image = frame.array
  
         # show the frame
         cv2.imshow("Frame", image)
-        key = cv2.waitKey(1)
+        cv2.waitKey(1)
  
         # clear the stream in preparation for the next frame
         rawCapture.truncate(0)
-        global stopVideo
-        if key == ord("q"):
-            print("Stopping Video Process")
+        
+	#if signal is recieved from main process, break loop to stop process
+        if conn.recv() == True:
+            print ("Video Process Stop Request Received")
             break
 
 screen = pygame.display.set_mode([480, 480])
 print("Starting __main__")
 if __name__ == '__main__':
-    video_process = Process(target = video)
-    print("Process Target Confirmed")
+    # set up pipe object and process for video
+    main_conn, video_conn = Pipe()
+    video_process = Process(target = video, args = (video_conn,))
     video_process.start()
-    print("Process Started")
+    print("Video Process Started")
+    print("Starting Control Loop")
     while True:
         #using pygame for key input
         pygame.event.pump()
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_q]:
-            global stopVideo
-            stopVideo = True
+            main_conn.send(True)
             break
 
         #using integers to determine final servo movement vector
@@ -89,5 +90,5 @@ if __name__ == '__main__':
             vAngle += vertical
         pantilthat.servo_one(hAngle)
         pantilthat.servo_two(vAngle)
-    print("Control Loop ended")
-    video_process.terminate()
+    print("Control Loop Ended")
+    video_process.join()
