@@ -30,7 +30,7 @@ def control(conn):
         #capture input state in variable
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_q]:
-            main_conn.send(True)
+            conn.send(True)
             break
 
         #using integers to determine final servo movement vector
