@@ -8,19 +8,19 @@ from picamera import PiCamera
 from picamera.array import PiRGBArray
 from multiprocessing import Process, Pipe
 
-#initialize pygame
-pygame.init()
-print("Pygame Initialized")
-
-#initialize servos
-vAngle = 0.0
-hAngle = 0.0
-pantilthat.servo_one(hAngle)
-pantilthat.servo_two(vAngle)
-speed = 0.25
-print("Servos Initialized")
-
 def control(conn):
+    #initialize pygame
+    pygame.init()
+    print("Pygame Initialized")
+
+    #initialize servos
+    vAngle = 0.0
+    hAngle = 0.0
+    pantilthat.servo_one(hAngle)
+    pantilthat.servo_two(vAngle)
+    speed = 0.25
+    print("Servos Initialized")
+    
     #using pygame frame to capture keyboard input
     screen = pygame.display.set_mode([480, 480])
     print("Control Process Started")
