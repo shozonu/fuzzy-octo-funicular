@@ -92,5 +92,5 @@ if __name__ == '__main__':
         if main_conn.recv() == True:
             print ("Stopping Video Loop")
             break
-    video_process.join()
+    control_process.join()
     print("Program Ended Successfully")
