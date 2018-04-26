@@ -18,7 +18,7 @@ def control(conn):
     hAngle = 0.0
     pantilthat.servo_one(hAngle)
     pantilthat.servo_two(vAngle)
-    speed = 0.25
+    speed = 0.2
     print("Servos Initialized")
     
     #using pygame frame to capture keyboard input
@@ -75,21 +75,20 @@ if __name__ == '__main__':
     time.sleep(0.1)
     print("Camera Initialized")
 
-    # grab the raw NumPy array representing the image, then initialize the timestamp
-    # and occupied/unoccupied text
+    # grab the raw NumPy array representing the image
     print("Continuous Video Capture Started")
     for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
         image = frame.array
 
         # show the frame
         cv2.imshow("Video Frame", image)
-        cv2.waitKey(1)
+        key = cv2.waitKey(1)
 
         # clear the stream in preparation for the next frame
         rawCapture.truncate(0)
 
 	#if signal is recieved from main process, break loop to stop process
-        if main_conn.recv() == True:
+        if key == ord('q'):
             print ("Stopping Video Loop")
             break
     control_process.join()
