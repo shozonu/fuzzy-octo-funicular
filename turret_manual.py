@@ -6,9 +6,9 @@ import pygame
 from pygame.locals import *
 from picamera import PiCamera
 from picamera.array import PiRGBArray
-from multiprocessing import Process, Pipe
+from multiprocessing import Process, Queue
 
-def control(conn):
+def control(input_q):
     #initialize pygame
     pygame.init()
     print("Pygame Initialized")
@@ -29,8 +29,8 @@ def control(conn):
         pygame.event.pump()
         #capture input state in variable
         pressed = pygame.key.get_pressed()
-        if pressed[pygame.K_q]:
-            conn.send(True)
+        if pressed[pygame.K_q] and input_q.empty():
+            input_q.put(False)
             break
 
         #using integers to determine final servo movement vector
@@ -62,8 +62,8 @@ def control(conn):
 print("Starting __main__")
 if __name__ == '__main__':
     # set up pipe object and process
-    main_conn, process_conn = Pipe()
-    control_process = Process(target = control, args = (process_conn,))
+    input_queue = Queue(maxsize = 1)
+    control_process = Process(target = control, args = (input_queue,))
     control_process.start()
 
     #initialize camera
@@ -88,7 +88,8 @@ if __name__ == '__main__':
         rawCapture.truncate(0)
 
 	#if signal is recieved from main process, break loop to stop process
-        if key == ord('q'):
+        if input_queue.full():
+            input_queue.get()
             print ("Stopping Video Loop")
             break
     control_process.join()
